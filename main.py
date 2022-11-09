@@ -1,4 +1,5 @@
 from fastapi import FastAPI, File, UploadFile
+import os
 import shutil
 from PIL import Image
 
@@ -16,8 +17,11 @@ async def create_upload_file(file: UploadFile | None = None):
     if not file:
         return {"message": "No upload file sent"}
     else:
-        with open(f"demo_images/{file.filename}", 'wb') as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        image = Image.open(f"demo_images/{file.filename}").convert('RGB')
-        ci = Interrogator(Config(clip_model_name="ViT-B/16", flavor_intermediate_count=256))
-        return {"message": ci.interrogate(image)}
+        try:
+            with open(f"demo_images/{file.filename}", 'wb') as buffer:
+                shutil.copyfileobj(file.file, buffer)
+                image = Image.open(f"demo_images/{file.filename}").convert('RGB')
+                ci = Interrogator(Config(clip_model_name="ViT-B/16", flavor_intermediate_count=256))
+        finally:
+            os.remove(f"demo_images/{file.filename}")
+            return {"message": ci.interrogate(image)}
